@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DayFlow – Daily Routine Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d0f1a;
+    --surface: #161826;
+    --card: #1e2135;
+    --border: #2a2f4a;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --text: #e8eaf6;
+    --muted: #7880a4;
+    --radius: 16px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(108,99,255,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(255,101,132,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; top: 24px; right: 24px;
+    background: var(--accent3);
+    color: #0d1a10;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-size: 15px;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-16px);
+    transition: all 0.35s cubic-bezier(.34,1.56,.64,1);
+    pointer-events: none;
+    max-width: 320px;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.error { background: var(--accent2); color: #fff; }
+
+  /* ── PAGES ── */
+  .page { display: none; width: 100%; min-height: 100vh; align-items: center; justify-content: center; padding: 24px; position: relative; z-index: 1; }
+  .page.active { display: flex; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 44px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+    animation: slideUp 0.5s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 36px;
+  }
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 7px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-size: 15px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 20px;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+  }
+  input::placeholder { color: var(--muted); }
+
+  .otp-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .otp-row input {
+    width: 60px; height: 60px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    padding: 0;
+    margin-bottom: 0;
+    letter-spacing: 0;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent) 0%, #9b59b6 100%);
+    color: #fff;
+    box-shadow: 0 6px 24px rgba(108,99,255,0.3);
+  }
+  .btn-primary:hover { box-shadow: 0 8px 32px rgba(108,99,255,0.45); transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--muted);
+    margin-top: 10px;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+  .btn-success {
+    background: linear-gradient(135deg, var(--accent3) 0%, #00c6a0 100%);
+    color: #0d1a10;
+    box-shadow: 0 6px 24px rgba(67,233,123,0.25);
+  }
+
+  .link-row {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .link-row span {
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .link-row span:hover { text-decoration: underline; }
+
+  /* ── STEP DOTS ── */
+  .steps {
+    display: flex; gap: 8px; margin-bottom: 28px;
+  }
+  .step-dot {
+    height: 5px; border-radius: 3px;
+    transition: all 0.3s;
+    background: var(--border);
+    flex: 1;
+  }
+  .step-dot.done { background: var(--accent); }
+  .step-dot.active { background: var(--accent2); }
+
+  /* ── ROUTINE APP ── */
+  #app-page { flex-direction: column; align-items: stretch; padding: 0; }
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .app-header .logo { margin: 0; font-size: 22px; }
+  .user-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 7px 16px;
+    font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .avatar {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    color: #fff;
+  }
+
+  .app-body {
+    flex: 1;
+    padding: 36px 32px;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .section-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+  /* ── ADD ROUTINE FORM ── */
+  .add-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 32px;
+  }
+  .add-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 18px;
+    color: var(--accent);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-row .field { display: flex; flex-direction: column; }
+  .form-row input, .form-row select { margin-bottom: 0; }
+
+  .activity-field { margin-top: 14px; display: flex; flex-direction: column; }
+  .activity-field input { margin-bottom: 0; }
+
+  .color-row {
+    display: flex; gap: 8px; margin: 14px 0;
+  }
+  .color-dot {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .color-dot:hover { transform: scale(1.15); }
+  .color-dot.selected { border-color: #fff; }
+
+  /* ── TASK LIST ── */
+  .tasks-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .task-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    animation: slideIn 0.4s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-24px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .task-card:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(108,99,255,0.1); }
+  .task-card.done-card {
+    opacity: 0.6;
+    border-color: var(--accent3);
+  }
+
+  .task-color-bar {
+    width: 5px; min-height: 50px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .task-info { flex: 1; }
+  .task-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .task-time {
+    color: var(--muted);
+    font-size: 13px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .task-time span { color: var(--accent); font-weight: 600; }
+  .done-card .task-name { text-decoration: line-through; color: var(--muted); }
+
+  .tick-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    color: var(--muted);
+  }
+  .tick-btn:hover { border-color: var(--accent3); color: var(--accent3); background: rgba(67,233,123,0.1); }
+  .tick-btn.ticked { border-color: var(--accent3); background: rgba(67,233,123,0.15); color: var(--accent3); }
+
+  .delete-btn {
+    background: none; border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    padding: 6px;
+    border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .delete-btn:hover { color: var(--accent2); background: rgba(255,101,132,0.1); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .emoji { font-size: 52px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; }
+
+  /* ── POPUP ── */
+  .popup-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .popup-overlay.open { opacity: 1; pointer-events: all; }
+  .popup-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 44px;
+    text-align: center;
+    max-width: 380px;
+    width: 90%;
+    transform: scale(0.85);
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+  }
+  .popup-overlay.open .popup-box { transform: scale(1); }
+  .popup-emoji { font-size: 64px; margin-bottom: 16px; animation: bounce 0.6s ease 0.2s both; }
+  @keyframes bounce {
+    0%   { transform: scale(0); }
+    60%  { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  .popup-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+  .popup-title.congrats { background: linear-gradient(135deg, var(--accent3), #00d9ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .popup-title.nope { background: linear-gradient(135deg, var(--accent2), #ffbe3d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .popup-msg { color: var(--muted); font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
+  .popup-btn {
+    display: inline-block;
+    padding: 12px 32px;
+    border-radius: 50px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .popup-btn:hover { transform: translateY(-2px); }
+  .popup-btn.green { background: linear-gradient(135deg, var(--accent3), #00d9ff); color: #0d1a10; box-shadow: 0 6px 20px rgba(67,233,123,0.3); }
+  .popup-btn.orange { background: linear-gradient(135deg, var(--accent2), #ffbe3d); color: #fff; box-shadow: 0 6px 20px rgba(255,101,132,0.3); }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .progress-info { flex: 1; }
+  .progress-info p { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .progress-info strong { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+  .progress-track {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    transition: width 0.5s ease;
+  }
+
+  /* Logout */
+  .logout-btn {
+    background: none;
+    border: 1.5px solid var(--border);
+    color: var(--muted);
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .logout-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  @media (max-width: 600px) {
+    .card { padding: 32px 22px; }
+    .app-body { padding: 20px 16px; }
+    .form-row { grid-template-columns: 1fr; }
+    .app-header { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- POPUP -->
+<div class="popup-overlay" id="popup">
+  <div class="popup-box">
+    <div class="popup-emoji" id="popup-emoji">🎉</div>
+    <div class="popup-title" id="popup-title">Congratulations!</div>
+    <div class="popup-msg" id="popup-msg">You've completed the task.</div>
+    <button class="popup-btn" id="popup-btn" onclick="closePopup()">Awesome!</button>
+  </div>
+</div>
+
+<!-- PAGE 1: LOGIN -->
+<div class="page active" id="login-page">
+  <div class="card">
+    <div class="logo">DayFlow ✦</div>
+    <div class="subtitle">Track your daily routines, stay on top of your life.</div>
+
+    <div class="steps">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-dot" id="dot2"></div>
+      <div class="step-dot" id="dot3"></div>
+    </div>
+
+    <!-- STEP 1: Name & Email -->
+    <div id="step1">
+      <h2>Create Account</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:24px;">Let's get you started</p>
+      <label>Full Name</label>
+      <input type="text" id="inp-name" placeholder="e.g. Priya Sharma"/>
+      <label>Email Address</label>
+      <input type="email" id="inp-email" placeholder="you@example.com"/>
+      <button class="btn btn-primary" onclick="sendOTP()">Send OTP to Email →</button>
+    </div>
+
+    <!-- STEP 2: OTP -->
+    <div id="step2" style="display:none;">
+      <h2>Verify Email</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:24px;">Enter the 4-digit code sent to <span id="masked-email" style="color:var(--accent);font-weight:600;"></span></p>
+      <label>Enter OTP</label>
+      <div class="otp-row">
+        <input type="text" maxlength="1" class="otp-input" id="otp0" oninput="otpMove(this,0)"/>
+        <input type="text" maxlength="1" class="otp-input" id="otp1" oninput="otpMove(this,1)"/>
+        <input type="text" maxlength="1" class="otp-input" id="otp2" oninput="otpMove(this,2)"/>
+        <input type="text" maxlength="1" class="otp-input" id="otp3" oninput="otpMove(this,3)"/>
+      </div>
+      <button class="btn btn-primary" onclick="verifyOTP()">Verify & Continue →</button>
+      <button class="btn btn-ghost" onclick="resendOTP()">Resend OTP</button>
+    </div>
+
+    <!-- STEP 3: Done (handled by redirect) -->
+  </div>
+</div>
+
+<!-- PAGE 2: APP -->
+<div class="page" id="app-page">
+  <div class="app-header">
+    <div class="logo">DayFlow ✦</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="user-chip">
+        <div class="avatar" id="header-avatar">?</div>
+        <span id="header-name">User</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="section-title">My Daily Routine 📅</div>
+    <div class="section-sub" id="today-date">Loading date...</div>
+
+    <!-- Progress -->
+    <div class="progress-bar-wrap">
+      <div class="progress-info">
+        <p>Today's Progress</p>
+        <strong id="prog-text">0 / 0 tasks</strong>
+        <div class="progress-track">
+          <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div style="font-size:36px;" id="prog-emoji">📋</div>
+    </div>
+
+    <!-- Add Routine -->
+    <div class="add-card">
+      <h3>+ Add New Routine</h3>
+      <div class="form-row">
+        <div class="field">
+          <label>Start Time</label>
+          <input type="time" id="inp-start"/>
+        </div>
+        <div class="field">
+          <label>End Time</label>
+          <input type="time" id="inp-end"/>
+        </div>
+      </div>
+      <div class="activity-field">
+        <label>Activity / Task Name</label>
+        <input type="text" id="inp-activity" placeholder="e.g. Morning Workout, Study Math..."/>
+      </div>
+      <div style="margin-bottom:4px;"><label>Color Tag</label></div>
+      <div class="color-row" id="color-row">
+        <div class="color-dot selected" style="background:#6c63ff;" data-color="#6c63ff" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#ff6584;" data-color="#ff6584" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#43e97b;" data-color="#43e97b" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#f7b731;" data-color="#f7b731" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#00d9ff;" data-color="#00d9ff" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#fd9644;" data-color="#fd9644" onclick="selectColor(this)"></div>
+      </div>
+      <button class="btn btn-success" style="margin-top:8px;" onclick="addTask()">Add to Routine ✓</button>
+    </div>
+
+    <!-- Task List -->
+    <div class="tasks-grid" id="tasks-grid">
+      <div class="empty-state" id="empty-state">
+        <div class="emoji">🌱</div>
+        <p>No routines yet. Add your first task above!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── STATE ──
+  let currentOTP = '';
+  let tasks = [];
+  let selectedColor = '#6c63ff';
+  let currentUser = { name: '', email: '' };
+
+  // ── UTILS ──
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = isError ? 'error show' : 'show';
+    setTimeout(() => t.className = '', 3200);
+  }
+
+  function maskEmail(email) {
+    const [user, domain] = email.split('@');
+    return user.slice(0,2) + '****@' + domain;
+  }
+
+  function fmt12(t) {
+    if (!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hh = h % 12 || 12;
+    return `${hh}:${m.toString().padStart(2,'0')} ${ampm}`;
+  }
+
+  // ── STEP NAVIGATION ──
+  function setStep(n) {
+    ['step1','step2'].forEach((s,i) => document.getElementById(s).style.display = (i===n-1)?'':'none');
+    ['dot1','dot2','dot3'].forEach((d,i) => {
+      const el = document.getElementById(d);
+      el.classList.remove('active','done');
+      if (i < n-1) el.classList.add('done');
+      else if (i === n-1) el.classList.add('active');
+    });
+  }
+
+  // ── OTP ──
+  function generateOTP() {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  function sendOTP() {
+    const name = document.getElementById('inp-name').value.trim();
+    const email = document.getElementById('inp-email').value.trim();
+    if (!name) { showToast('Please enter your name', true); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Please enter a valid email', true); return; }
+
+    currentOTP = generateOTP();
+    currentUser = { name, email };
+
+    // Simulate sending email — show OTP in toast (in production, call a backend)
+    showToast(`📧 OTP sent! (Demo OTP: ${currentOTP})`);
+    document.getElementById('masked-email').textContent = maskEmail(email);
+    setStep(2);
+  }
+
+  function resendOTP() {
+    currentOTP = generateOTP();
+    showToast(`📧 New OTP sent! (Demo OTP: ${currentOTP})`);
+    ['otp0','otp1','otp2','otp3'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('otp0').focus();
+  }
+
+  function otpMove(el, idx) {
+    el.value = el.value.replace(/[^0-9]/g,'');
+    if (el.value && idx < 3) document.getElementById(`otp${idx+1}`).focus();
+  }
+
+  function verifyOTP() {
+    const entered = ['otp0','otp1','otp2','otp3'].map(id => document.getElementById(id).value).join('');
+    if (entered.length < 4) { showToast('Enter all 4 digits', true); return; }
+    if (entered === currentOTP) {
+      document.getElementById('dot1').classList.replace('active','done');
+      document.getElementById('dot2').classList.add('done');
+      document.getElementById('dot3').classList.add('active');
+      showToast('✅ Email verified! Welcome aboard!');
+      setTimeout(() => goToApp(), 800);
+    } else {
+      showToast('❌ Incorrect OTP. Try again.', true);
+      ['otp0','otp1','otp2','otp3'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('otp0').focus();
+    }
+  }
+
+  // ── APP ──
+  function goToApp() {
+    document.getElementById('login-page').classList.remove('active');
+    document.getElementById('app-page').classList.add('active');
+    document.getElementById('header-name').textContent = currentUser.name;
+    document.getElementById('header-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
+    const now = new Date();
+    document.getElementById('today-date').textContent = now.toLocaleDateString('en-IN', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    renderTasks();
+  }
+
+  function logout() {
+    currentUser = { name:'', email:'' };
+    tasks = [];
+    document.getElementById('app-page').classList.remove('active');
+    document.getElementById('login-page').classList.add('active');
+    document.getElementById('inp-name').value = '';
+    document.getElementById('inp-email').value = '';
+    setStep(1);
+  }
+
+  // ── COLOR ──
+  function selectColor(el) {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedColor = el.dataset.color;
+  }
+
+  // ── TASKS ──
+  function addTask() {
+    const start = document.getElementById('inp-start').value;
+    const end = document.getElementById('inp-end').value;
+    const activity = document.getElementById('inp-activity').value.trim();
+    if (!start) { showToast('Select start time', true); return; }
+    if (!end)   { showToast('Select end time', true); return; }
+    if (!activity) { showToast('Enter activity name', true); return; }
+    if (start >= end) { showToast('End time must be after start time', true); return; }
+
+    tasks.push({ id: Date.now(), start, end, activity, color: selectedColor, done: false });
+    document.getElementById('inp-start').value = '';
+    document.getElementById('inp-end').value = '';
+    document.getElementById('inp-activity').value = '';
+    showToast('🗓 Routine added!');
+    renderTasks();
+  }
+
+  function toggleDone(id) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    task.done = !task.done;
+    renderTasks();
+    if (task.done) {
+      showCongrats();
+    } else {
+      showBetterLuck();
+    }
+  }
+
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    renderTasks();
+    showToast('Task removed');
+  }
+
+  function renderTasks() {
+    const grid = document.getElementById('tasks-grid');
+    const done = tasks.filter(t => t.done).length;
+    const total = tasks.length;
+
+    // Progress
+    document.getElementById('prog-text').textContent = `${done} / ${total} task${total!==1?'s':''}`;
+    document.getElementById('prog-fill').style.width = total ? `${(done/total)*100}%` : '0%';
+    document.getElementById('prog-emoji').textContent =
+      total === 0 ? '📋' : done === total ? '🏆' : done > 0 ? '🔥' : '📋';
+
+    // Sort by time
+    const sorted = [...tasks].sort((a,b) => a.start.localeCompare(b.start));
+
+    grid.innerHTML = '';
+    if (sorted.length === 0) {
+      grid.innerHTML = `<div class="empty-state" id="empty-state"><div class="emoji">🌱</div><p>No routines yet. Add your first task above!</p></div>`;
+      return;
+    }
+
+    sorted.forEach((task, i) => {
+      const card = document.createElement('div');
+      card.className = `task-card${task.done ? ' done-card' : ''}`;
+      card.style.animationDelay = `${i * 0.07}s`;
+      card.innerHTML = `
+        <div class="task-color-bar" style="background:${task.color}"></div>
+        <div class="task-info">
+          <div class="task-name">${task.activity}</div>
+          <div class="task-time">⏰ <span>${fmt12(task.start)}</span> → <span>${fmt12(task.end)}</span></div>
+        </div>
+        <button class="tick-btn${task.done?' ticked':''}" onclick="toggleDone(${task.id})" title="${task.done?'Mark undone':'Mark done'}">
+          ${task.done ? '✓' : '○'}
+        </button>
+        <button class="delete-btn" onclick="deleteTask(${task.id})" title="Delete">✕</button>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // ── POPUPS ──
+  function showCongrats() {
+    document.getElementById('popup-emoji').textContent = '🎉';
+    document.getElementById('popup-title').className = 'popup-title congrats';
+    document.getElementById('popup-title').textContent = 'Congratulations!';
+    document.getElementById('popup-msg').textContent = `Amazing work! You've completed this task. Keep up the great momentum! 🚀`;
+    const btn = document.getElementById('popup-btn');
+    btn.className = 'popup-btn green';
+    btn.textContent = 'Keep Going! 🔥';
+    document.getElementById('popup').classList.add('open');
+  }
+
+  function showBetterLuck() {
+    document.getElementById('popup-emoji').textContent = '💪';
+    document.getElementById('popup-title').className = 'popup-title nope';
+    document.getElementById('popup-title').textContent = 'Better Luck Next Time!';
+    document.getElementById('popup-msg').textContent = `Don't worry — every step counts. Stay focused and you'll crush it next time! 🌟`;
+    const btn = document.getElementById('popup-btn');
+    btn.className = 'popup-btn orange';
+    btn.textContent = "I'll Try Again!";
+    document.getElementById('popup').classList.add('open');
+  }
+
+  function closePopup() {
+    document.getElementById('popup').classList.remove('open');
+  }
+
+  // ── KEYBOARD for OTP ──
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('step1').style.display !== 'none') sendOTP();
+      else if (document.getElementById('step2').style.display !== 'none') verifyOTP();
+    }
+    if (e.key === 'Backspace') {
+      const active = document.activeElement;
+      if (active && active.classList.contains('otp-input') && !active.value) {
+        const idx = parseInt(active.id.replace('otp',''));
+        if (idx > 0) document.getElementById(`otp${idx-1}`).focus();
+      }
+    }
+  });
+
+  // Init
+  setStep(1);
+</script>
+</body>
+</html>
