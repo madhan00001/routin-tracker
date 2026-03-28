@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Pro Daily Routine Tracker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            text-align: center;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(255,255,255,0.1) 2px,
+                rgba(255,255,255,0.1) 4px
+            );
+            animation: sparkle 20s linear infinite;
+        }
+        @keyframes sparkle {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(0deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(360deg); }
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.2);
+        }
+        .stat {
+            text-align: center;
+            color: white;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+        .add-form {
+            padding: 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        input[type="time"], input[type="text"], select {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.9);
+            flex: 1;
+            min-width: 120px;
+        }
+        button.add {
+            padding: 12px 30px;
+            background: #00b894;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button.add:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,184,148,0.3);
+        }
+        .progress-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 5px solid #ddd;
+            position: relative;
+            margin: 0 auto 10px;
+        }
+        .progress-circle::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .table-container {
+            padding: 0 30px 30px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        th {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px;
+            text-align: left;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        td {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        tr:hover {
+            background: rgba(255,255,255,0.8);
+            transform: scale(1.01);
+        }
+        tr.completed td {
+            background: linear-gradient(135deg, #a8e6cf, #dcedc1);
+        }
+        .checkbox {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #74b9ff;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 4px 15px rgba(116,185,255,0.3);
+        }
+        .checkbox.checked {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            border-color: #00b894;
+            transform: rotate(360deg) scale(1.1);
+            box-shadow: 0 8px 25px rgba(0,184,148,0.4);
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button.action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .not-finished { background: #fdcb6e; color: #2d3436; }
+        .reset { background: #6c5ce7; color: white; }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .celebration {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+            animation: fadeIn 0.5s;
+        }
+        .popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            padding: 60px;
+            border-radius: 30px;
+            text-align: center;
+            color: #2d3436;
+            font-size: 28px;
+            max-width: 500px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            animation: celebrateBig 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        @keyframes celebrateBig {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); }
+            50% { transform: translate(-50%, -50%) scale(1.2) rotate(180deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(360deg); }
+        }
+        .streak-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(0,184,148,0.4);
+            animation: bounce 2s infinite;
+            z-index: 100;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        @media (max-width: 768px) {
+            .add-form { flex-direction: column; }
+            input, select, button.add { min-width: unset; }
+            .stats { flex-direction: column; gap: 15px; }
+            .table-container { padding: 0 15px 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Pro Daily Routine Tracker</h1>
+            <p>Level up your day! 🎯</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-number" id="totalActivities">0</span>
+                Total Tasks
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="completedActivities">0</span>
+                Completed
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="streakCount">0</span>
+                Day Streak
+            </div>
+        </div>
+
+        <div class="add-form">
+            <input type="time" id="startTimeInput" required>
+            <input type="time" id="endTimeInput" required>
+            <input type="text" id="activityInput" placeholder="🏃 Add your activity..." required>
+            <select id="priorityInput">
+                <option value="normal">⚪ Normal</option>
+                <option value="high">🔴 High</option>
+                <option value="critical">🟣 Critical</option>
+            </select>
+            <button class="add" onclick="addActivity()">➕ Add Task</button>
+        </div>
+
+        <div class="table-container">
+            <table id="routineTable">
+                <thead>
+                    <tr>
+                        <th>⏰ Time Range</th>
+                        <th>📋 Activity</th>
+                        <th>🎯 Status</th>
+                        <th>⭐ Priority</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="celebration" class="celebration">
+        <div class="popup">
+            <h2>🎉 AMAZING JOB! 🎉</h2>
+            <p>You crushed your entire routine! 🏆</p>
+            <div style="font-size: 48px; margin: 20px 0;">✨</div>
+            <p><strong>Keep the streak alive tomorrow!</strong></p>
+            <button onclick="closeCelebration()" style="padding: 15px 40px; font-size: 20px; background: #00b894; color: white; border: none; border-radius: 25px; cursor: pointer;">Continue Streak ➡️</button>
+        </div>
+    </div>
+
+    <script>
+        let activities = JSON.parse(localStorage.getItem('proDailyRoutine')) || [];
+        let currentStreak = parseInt(localStorage.getItem('streakCount')) || 0;
+        const today = new Date().toDateString();
+
+        function saveData() {
+            localStorage.setItem('proDailyRoutine', JSON.stringify(activities));
+            localStorage.setItem('streakCount', currentStreak);
+            updateStats();
+        }
+
+        function updateStats() {
+            const total = activities.length;
+            const completed = activities.filter(a => a.completed).length;
+            document.getElementById('totalActivities').textContent = total;
+            document.getElementById('completedActivities').textContent = completed;
+            document.getElementById('streakCount').textContent = currentStreak;
+            
+            if (completed === total && total > 0) {
+                if (!localStorage.getItem('celebratedToday')) {
+                    currentStreak++;
+                    localStorage.setItem('streakCount', currentStreak);
+                    localStorage.setItem('celebratedToday', today);
+                    showCelebration();
+                }
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.querySelector('#routineTable tbody');
+            tbody.innerHTML = '';
+            activities.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                     .sort((a, b) => b.priority.localeCompare(a.priority));
+            
+            activities.forEach((activity, index) => {
+                const row = tbody.insertRow();
+                row.className = activity.completed ? 'completed' : '';
+                const priorityIcon = activity.priority === 'critical' ? '🟣' : 
+                                   activity.priority === 'high' ? '🔴' : '⚪';
+                row.innerHTML = `
+                    <td><strong>${activity.startTime} - ${activity.endTime}</strong></td>
+                    <td>${activity.activity}</td>
+                    <td>
+                        <div class="checkbox ${activity.completed ? 'checked' : ''}" onclick="toggleActivity(${index})">
+                            ${activity.completed ? '✅' : '⬜'}
+                        </div>
+                        <div class="btn-group">
+                            ${!activity.completed ? 
+                                `<button class="action-btn not-finished" onclick="markNotFinished(${index})">⏳ Not Done</button>` : 
+                                `<button class="action-btn reset" onclick="resetActivity(${index})">🔄 Reset</button>`
+                            }
+                            <button class="action-btn reset" onclick="deleteActivity(${index})" style="background: #e17055; color: white;">🗑️</button>
+                        </div>
+                    </td>
+                    <td style="font-size: 24px;">${priorityIcon}</td>
+                `;
+            });
+        }
+
+        function addActivity() {
+            const startTime = document.getElementById('startTimeInput').value;
+            const endTime = document.getElementById('endTimeInput').value;
+            const activity = document.getElementById('activityInput').value.trim();
+            const priority = document.getElementById('priorityInput').value;
+
+            if (startTime && endTime && activity) {
+                activities.push({ 
+                    startTime, endTime, activity, 
+                    completed: false, 
+                    priority,
+                    addedDate: new Date().toISOString()
+                });
+                saveData();
+                renderTable();
+                document.getElementById('startTimeInput').value = '';
+                document.getElementById('endTimeInput').value = '';
+                document.getElementById('activityInput').value = '';
+            }
+        }
+
+        function toggleActivity(index) {
+            activities[index].completed = !activities[index].completed;
+            saveData();
+            renderTable();
+        }
+
+        function markNotFinished(index) {
+            alert('💪 You got this! Try again tomorrow and smash it! Keep pushing!');
+        }
+
+        function resetActivity(index) {
+            activities[index].completed = false;
+            saveData();
+            renderTable();
+        }
+
+        function deleteActivity(index) {
+            if (confirm('Delete this activity?')) {
+                activities.splice(index, 1);
+                saveData();
+                renderTable();
+            }
+        }
+
+        function showCelebration() {
+            document.getElementById('celebration').style.display = 'block';
+            createEpicConfetti();
+            createStreakBadge();
+        }
+
+        function closeCelebration() {
+            document.getItem('celebration').style.display = 'none';
+            // Reset celebration flag for next day
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            if (tomorrow.toDateString() !== today) {
+                localStorage.removeItem('celebratedToday');
+            }
+        }
+
+        function createEpicConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `
+                    position: fixed;
+                    width: 12px; height: 12px;
+                    background: hsl(${Math.random()*360}, 70%, 60%);
+                    left: ${Math.random()*100}vw;
+                    animation: epicFall ${Math.random()*3+2}s linear infinite;
+                    z-index: 10001;
+                    border-radius: 50%;
+                `;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 5000);
+            }
+        }
+
+        function createStreakBadge() {
+            const badge = document.createElement('div');
+            badge.className = 'streak-badge';
+            badge.textContent = `🔥 ${currentStreak} Day Streak!`;
+            document.body.appendChild(badge);
+            setTimeout(() => badge.remove(), 5000);
+        }
+
+        // Event listeners
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addActivity();
+        });
+
+        // Initialize
+        if (localStorage.getItem('celebratedToday') !== today) {
+            currentStreak = 0;
+        }
+        updateStats();
+        renderTable();
+    </script>
+</body>
+</html>
