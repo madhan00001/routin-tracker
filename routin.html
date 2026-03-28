@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 Classic Daily Routine Tracker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 1px solid #e1e8ed;
+        }
+        .header {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: #ecf0f1;
+            text-align: center;
+            padding: 35px;
+            position: relative;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 25px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .add-form {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        input[type="time"], input[type="text"], select {
+            padding: 12px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #ffffff;
+            flex: 1;
+            min-width: 130px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: inherit;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button.add {
+            padding: 14px 32px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button.add:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+        }
+        .table-container {
+            padding: 0 30px 30px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        th {
+            background: #495057;
+            color: #ffffff;
+            padding: 18px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        tr.completed td {
+            background: linear-gradient(90deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+        }
+        .checkbox {
+            width: 48px;
+            height: 48px;
+            border: 3px solid #6c757d;
+            border-radius: 10px;
+            background: #ffffff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            transition: all 0.4s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        .checkbox.checked {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        button.action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .not-finished { 
+            background: #ffc107; 
+            color: #212529; 
+        }
+        .reset { 
+            background: #007bff; 
+            color: white; 
+        }
+        .delete-btn { 
+            background: #dc3545; 
+            color: white; 
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        .action-btn:hover { 
+            transform: translateY(-1px); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+        }
+        .celebration {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 10000;
+        }
+        .popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 50px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            max-width: 450px;
+        }
+        .popup h2 {
+            color: #28a745;
+            font-size: 2.2em;
+            margin: 0 0 20px 0;
+        }
+        .streak-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+            animation: pulse 2s infinite;
+            z-index: 100;
+            font-size: 0.95em;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @media (max-width: 768px) {
+            .add-form { 
+                flex-direction: column; 
+                gap: 12px;
+            }
+            input, select, button.add { 
+                min-width: unset; 
+                width: 100%;
+            }
+            .stats { 
+                flex-direction: column; 
+                gap: 20px; 
+                text-align: center;
+            }
+            .table-container { 
+                padding: 0 15px 20px; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Classic Daily Routine Tracker</h1>
+            <p>Master your day with timeless elegance</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-number" id="totalActivities">0</span>
+                <span class="stat-label">Total Tasks</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="completedActivities">0</span>
+                <span class="stat-label">Completed</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="streakCount">0</span>
+                <span class="stat-label">Day Streak</span>
+            </div>
+        </div>
+
+        <div class="add-form">
+            <input type="time" id="startTimeInput" required>
+            <input type="time" id="endTimeInput" required>
+            <input type="text" id="activityInput" placeholder="Add your activity..." required>
+            <select id="priorityInput">
+                <option value="normal">• Normal</option>
+                <option value="high">● High</option>
+                <option value="critical">◆ Critical</option>
+            </select>
+            <button class="add" onclick="addActivity()">➕ Add Task</button>
+        </div>
+
+        <div class="table-container">
+            <table id="routineTable">
+                <thead>
+                    <tr>
+                        <th>⏰ Time Range</th>
+                        <th>📋 Activity</th>
+                        <th>🎯 Status</th>
+                        <th>⭐ Priority</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="celebration" class="celebration">
+        <div class="popup">
+            <h2>🎉 Perfect Day Achieved! 🎉</h2>
+            <p>You've completed your entire routine!<br><strong>Excellent discipline!</strong></p>
+            <div style="font-size: 3em; margin: 25px 0; color: #28a745;">✨</div>
+            <button onclick="closeCelebration()" class="add" style="padding: 15px 40px; font-size: 18px;">Continue Tomorrow ➡️</button>
+        </div>
+    </div>
+
+    <script>
+        let activities = JSON.parse(localStorage.getItem('classicDailyRoutine')) || [];
+        let currentStreak = parseInt(localStorage.getItem('streakCount')) || 0;
+        const today = new Date().toDateString();
+
+        function saveData() {
+            localStorage.setItem('classicDailyRoutine', JSON.stringify(activities));
+            localStorage.setItem('streakCount', currentStreak);
+            updateStats();
+        }
+
+        function updateStats() {
+            const total = activities.length;
+            const completed = activities.filter(a => a.completed).length;
+            document.getElementById('totalActivities').textContent = total;
+            document.getElementById('completedActivities').textContent = completed;
+            document.getElementById('streakCount').textContent = currentStreak;
+        }
+
+        function renderTable() {
+            const tbody = document.querySelector('#routineTable tbody');
+            tbody.innerHTML = '';
+            activities.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                     .sort((a, b) => b.priority.localeCompare(a.priority));
+            
+            activities.forEach((activity, index) => {
+                const row = tbody.insertRow();
+                row.className = activity.completed ? 'completed' : '';
+                const priorityIcon = activity.priority === 'critical' ? '◆' : 
+                                   activity.priority === 'high' ? '●' : '•';
+                row.innerHTML = `
+                    <td><strong>${activity.startTime} - ${activity.endTime}</strong></td>
+                    <td>${activity.activity}</td>
+                    <td>
+                        <div class="checkbox ${activity.completed ? 'checked' : ''}" onclick="toggleActivity(${index})">
+                            ${activity.completed ? '✓' : ''}
+                        </div>
+                        <div class="btn-group">
+                            ${!activity.completed ? 
+                                `<button class="action-btn not-finished" onclick="markNotFinished(${index})">Not Done</button>` : 
+                                `<button class="action-btn reset" onclick="resetActivity(${index})">Reset</button>`
+                            }
+                            <button class="action-btn delete-btn" onclick="deleteActivity(${index})">Delete</button>
+                        </div>
+                    </td>
+                    <td style="font-size: 20px; font-weight: bold;">${priorityIcon}</td>
+                `;
+            });
+        }
+
+        function addActivity() {
+            const startTime = document.getElementById('startTimeInput').value;
+            const endTime = document.getElementById('endTimeInput').value;
+            const activity = document.getElementById('activityInput').value.trim();
+            const priority = document.getElementById('priorityInput').value;
+
+            if (startTime && endTime && activity) {
+                activities.push({ 
+                    startTime, endTime, activity, 
+                    completed: false, priority,
+                    addedDate: new Date().toISOString()
+                });
+                saveData();
+                renderTable();
+                document.getElementById('startTimeInput').value = '';
+                document.getElementById('endTimeInput').value = '';
+                document.getElementById('activityInput').value = '';
+            }
+        }
+
+        function toggleActivity(index) {
+            activities[index].completed = !activities[index].completed;
+            saveData();
+            renderTable();
+            checkCompletion();
+        }
+
+        function markNotFinished(index) {
+            alert('Keep up the good work! You can tackle this tomorrow.');
+        }
+
+        function resetActivity(index) {
+            activities[index].completed = false;
+            saveData();
+            renderTable();
+        }
+
+        function deleteActivity(index) {
+            if (confirm('Remove this activity?')) {
+                activities.splice(index, 1);
+                saveData();
+                renderTable();
+            }
+        }
+
+        function checkCompletion() {
+            const total = activities.length;
+            const completed = activities.filter(a => a.completed).length;
+            if (completed === total && total > 0 && !localStorage.getItem('celebratedToday')) {
+                currentStreak++;
+                localStorage.setItem('streakCount', currentStreak);
+                localStorage.setItem('celebratedToday', today);
+                showCelebration();
+            }
+        }
+
+        function showCelebration() {
+            document.getElementById('celebration').style.display = 'block';
+            createConfetti();
+        }
+
+        function closeCelebration() {
+            document.getElementById('celebration').style.display = 'none';
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 75; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `
+                    position: fixed; width: 10px; height: 10px;
+                    background: ${['#28a745', '#007bff', '#ffc107', '#dc3545'][Math.floor(Math.random()*4)]};
+                    left: ${Math.random()*100}vw;
+                    animation: fall 3s linear infinite;
+                    z-index: 10001; border-radius: 3px;
+                `;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 4000);
+            }
+        }
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addActivity();
+        });
+
+        if (localStorage.getItem('celebratedToday') !== today) {
+            localStorage.removeItem('celebratedToday');
+        }
+        updateStats();
+        renderTable();
+    </script>
+</body>
+</html>
